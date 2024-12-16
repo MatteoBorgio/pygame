@@ -53,7 +53,7 @@ def selezione_difficoltà() -> int:
             difficoltà = int(input())
             if difficoltà < 1 or difficoltà > 3:
                 print("Seleziona una difficoltà valida \n")
-                selezione_difficoltà()
+                continue
             if difficoltà == 1:
                 print("Difficoltà impostata su facile. \n")
                 return 15
