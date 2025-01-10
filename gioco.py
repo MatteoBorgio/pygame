@@ -94,8 +94,8 @@ message_displayed = False
 message_time = 0
 
 def display_message(screen):
-    text_font = pygame.font.Font("C:/Users/matte/Downloads/Pixeltype.ttf", 70)
-    message_surface = text_font.render("You lost a heart!", False, 'White', 'Red')
+    message_surface = pygame.image.load("C:/Users/matte/Downloads/broken_heart.webp")
+    message_surface = pygame.transform.scale(message_surface, (300, 200))
     message_rect = message_surface.get_rect(center=(400, 200))
     screen.blit(message_surface, message_rect)
 
@@ -147,7 +147,7 @@ obstacle_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(obstacle_timer, 1500)
 
 message_timer_event = pygame.USEREVENT + 2
-pygame.time.set_timer(message_timer_event, 5000)  # 2 secondi per ogni messaggio
+pygame.time.set_timer(message_timer_event, 3000)  
 
 pygame.display.set_caption("Jumping with animals")
 
@@ -226,3 +226,4 @@ while True:
 
     pygame.display.update()
     clock.tick(60)
+
