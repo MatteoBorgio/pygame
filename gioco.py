@@ -75,11 +75,29 @@ class Obstacle(pygame.sprite.Sprite):
         if self.rect.right < 0:
             self.kill()
 
+class Hearts(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.hearts = []
+        self.hearts_surface = pygame.image.load("C:/Users/matte/Downloads/heart-48942_640.png").convert_alpha()
+        self.hearts_surface = pygame.transform.scale(self.hearts_surface, (25, 25))
+        self.image = self.hearts_surface
+        self.rect = self.image.get_rect()
+
 def display_score(screen, score):
     text_font = pygame.font.Font("C:/Users/matte/Downloads/Pixeltype.ttf", 50)
     score_surface = text_font.render(f'Punteggio: {score}', False, 'White')
     score_rect = score_surface.get_rect(center=(400, 50))
-    screen.blit(score_surface, score_rect)
+    screen.blit(score_surface, score_rect)          
+
+message_displayed = False
+message_time = 0
+
+def display_message(screen):
+    text_font = pygame.font.Font("C:/Users/matte/Downloads/Pixeltype.ttf", 70)
+    message_surface = text_font.render("You lost a heart!", False, 'White', 'Red')
+    message_rect = message_surface.get_rect(center=(400, 200))
+    screen.blit(message_surface, message_rect)
 
 pygame.init()
 
@@ -89,6 +107,7 @@ clock = pygame.time.Clock()
 game_active = False
 start_time = 0
 score = 0
+count = 0
 
 sky_surface = pygame.image.load("C:/Users/matte/Downloads/sky.jpg").convert()
 sky_surface = pygame.transform.scale(sky_surface, (800, 300))
@@ -98,6 +117,17 @@ ground_surface = pygame.transform.scale(ground_surface, (800, 300))
 
 player = pygame.sprite.GroupSingle()
 player.add(Player())
+
+hearts = pygame.sprite.Group()
+
+heart1 = Hearts()
+heart1.rect.topleft = (650, 30)  # Posizione del primo cuore
+heart2 = Hearts()
+heart2.rect.topleft = (680, 30)  # Posizione del secondo cuore
+heart3 = Hearts()
+heart3.rect.topleft = (710, 30)  # Posizione del terzo cuore
+
+hearts.add(heart1, heart2, heart3)
 
 player_stand = pygame.image.load("C:/Users/matte/Downloads/Untitled1064_20241231221357.png").convert_alpha()
 player_stand = pygame.transform.scale(player_stand, (180, 260))
@@ -116,9 +146,13 @@ game_message_rect = game_message.get_rect(center=(400, 350))
 obstacle_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(obstacle_timer, 1500)
 
+message_timer_event = pygame.USEREVENT + 2
+pygame.time.set_timer(message_timer_event, 5000)  # 2 secondi per ogni messaggio
+
 pygame.display.set_caption("Jumping with animals")
 
 while True:
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             pygame.quit()
@@ -136,7 +170,11 @@ while True:
             else:
                 obstacles.add(Obstacle('snail'))
 
+        if event.type == message_timer_event:
+            message_displayed = False  
+
     if game_active:
+        
         current_time = pygame.time.get_ticks() - start_time
         score = current_time // 1000
 
@@ -151,12 +189,28 @@ while True:
         obstacles.update()
         obstacles.draw(screen)
 
+        hearts.draw(screen)
+
         if pygame.sprite.spritecollide(player.sprite, obstacles, False):
-            game_active = False
+            count += 1
+            if count == 1:
+                hearts.remove(heart1)
+                message_displayed = True 
+            elif count == 2:
+                hearts.remove(heart2)
+                message_displayed = True  
+            elif count == 3:
+                hearts.remove(heart3)
+                game_active = False
+                count = 0
+                obstacles.empty()  # Rimuovi tutti gli ostacoli
+                hearts.empty() #Rimuovi tutti i cuori
+                player.sprite.rect.midbottom = (100, 310)  # Ripristina la posizione del giocatore
             obstacles.empty()  # Rimuovi tutti gli ostacoli
             player.sprite.rect.midbottom = (100, 310)  # Ripristina la posizione del giocatore
 
     else:
+        hearts.add(heart1, heart2, heart3)
         screen.fill((94, 129, 162))
         screen.blit(player_stand, player_stand_rectangle)  # Mostra il giocatore nella posizione iniziale
         screen.blit(game_name, game_name_rect)
@@ -166,6 +220,9 @@ while True:
             screen.blit(game_message, game_message_rect)
         else:
             screen.blit(score_message, score_message_rect)
+
+    if message_displayed:
+        display_message(screen)
 
     pygame.display.update()
     clock.tick(60)
