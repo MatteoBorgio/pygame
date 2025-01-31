@@ -28,7 +28,7 @@ class Player(pygame.sprite.Sprite):
         self.rect.y += self.gravity
         if self.rect.bottom >= 310:
             self.rect.bottom = 310
-
+ 
     def animations(self):
         if self.rect.bottom < 310:
             self.image = self.player_jump
@@ -109,8 +109,16 @@ start_time = 0
 score = 0
 count = 0
 
-sky_surface = pygame.image.load("C:/Users/matte/Downloads/sky.jpg").convert()
-sky_surface = pygame.transform.scale(sky_surface, (800, 300))
+sky_surfaces = [
+    pygame.image.load("C:/Users/matte/Downloads/dawn.jpg"),
+    pygame.image.load("C:/Users/matte/Downloads/Sky.png"),
+    pygame.image.load("C:/Users/matte/Downloads/evening.jpg"),
+    pygame.image.load("C:/Users/matte/Downloads/sky.jpg")
+]
+
+sky_surfaces = [pygame.transform.scale(img, (800, 300)) for img in sky_surfaces]
+
+current_sky_index = 0
 
 ground_surface = pygame.image.load("C:/Users/matte/Downloads/ground.png").convert()
 ground_surface = pygame.transform.scale(ground_surface, (800, 300))
@@ -178,7 +186,10 @@ while True:
         current_time = pygame.time.get_ticks() - start_time
         score = current_time // 1000
 
-        screen.blit(sky_surface, (0, 0))
+        if score // 30 != current_sky_index:
+            current_sky_index = score // 30 % len(sky_surfaces)  # Ciclo tra 0 e 3
+        screen.blit(sky_surfaces[current_sky_index], (0, 0))
+
         screen.blit(ground_surface, (0, 300))
         
         display_score(screen, score)
@@ -226,4 +237,5 @@ while True:
 
     pygame.display.update()
     clock.tick(60)
+
 
