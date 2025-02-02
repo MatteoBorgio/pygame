@@ -84,11 +84,34 @@ class Hearts(pygame.sprite.Sprite):
         self.image = self.hearts_surface
         self.rect = self.image.get_rect()
 
+class Coins(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.coins_surface = pygame.image.load("C:/Users/matte/Downloads/coin.png").convert_alpha()
+        self.coins_surface = pygame.transform.scale(self.coins_surface, (50, 50))
+        self.image = self.coins_surface
+        self.rect = self.image.get_rect(midbottom=(random.randint(600, 1100), random.randint(250, 300)))
+
+    def update(self):
+        self.rect.x -= 5
+        if self.rect.right < 0:
+            self.kill()
+
 def display_score(screen, score):
     text_font = pygame.font.Font("C:/Users/matte/Downloads/Pixeltype.ttf", 50)
-    score_surface = text_font.render(f'Punteggio: {score}', False, 'White')
+    score_surface = text_font.render(f'Score: {score}', False, 'White')
     score_rect = score_surface.get_rect(center=(400, 50))
-    screen.blit(score_surface, score_rect)          
+    screen.blit(score_surface, score_rect) 
+
+def display_coin_taken(screen, coin_taken):
+    coin_surface = pygame.image.load("C:/Users/matte/Downloads/coin.png")
+    coin_surface = pygame.transform.scale(coin_surface, (25, 25))
+    coin_rect = coin_surface.get_rect(center = (50, 50))
+    text_font = pygame.font.Font("C:/Users/matte/Downloads/Pixeltype.ttf", 30)
+    text_surface = text_font.render(f' : {coin_taken}', False, 'White')
+    text_rect = text_surface.get_rect(center=(80, 52))
+    screen.blit(coin_surface, coin_rect)
+    screen.blit(text_surface, text_rect)         
 
 message_displayed = False
 message_time = 0
@@ -107,6 +130,7 @@ clock = pygame.time.Clock()
 game_active = False
 start_time = 0
 score = 0
+coin_taken = 0
 count = 0
 
 sky_surfaces = [
@@ -125,6 +149,8 @@ ground_surface = pygame.transform.scale(ground_surface, (800, 300))
 
 player = pygame.sprite.GroupSingle()
 player.add(Player())
+
+coins = pygame.sprite.Group()
 
 hearts = pygame.sprite.Group()
 
@@ -155,7 +181,10 @@ obstacle_timer = pygame.USEREVENT + 1
 pygame.time.set_timer(obstacle_timer, 1500)
 
 message_timer_event = pygame.USEREVENT + 2
-pygame.time.set_timer(message_timer_event, 3000)  
+pygame.time.set_timer(message_timer_event, 3000)
+
+coins_timer = pygame.USEREVENT + 3
+pygame.time.set_timer(coins_timer, 500)
 
 pygame.display.set_caption("Jumping with animals")
 
@@ -169,14 +198,21 @@ while True:
             if event.key == pygame.K_LSHIFT and not game_active:
                 game_active = True
                 start_time = pygame.time.get_ticks()
+                coin_taken = 0
             if event.key == pygame.K_SPACE and game_active:
                 player.sprite.player_input()
+            # if event.key == pygame.K_ESCAPE and game_active:  DA MODIFICARE
+                # game_active = False
+        
         
         if event.type == obstacle_timer and game_active:
             if random.randint(0, 1) == 0:
                 obstacles.add(Obstacle('fly'))
             else:
                 obstacles.add(Obstacle('snail'))
+
+        if event.type == coins_timer and game_active:
+            coins.add(Coins())
 
         if event.type == message_timer_event:
             message_displayed = False  
@@ -187,12 +223,23 @@ while True:
         score = current_time // 1000
 
         if score // 30 != current_sky_index:
-            current_sky_index = score // 30 % len(sky_surfaces)  # Ciclo tra 0 e 3
+            current_sky_index = score // 30 % len(sky_surfaces)
         screen.blit(sky_surfaces[current_sky_index], (0, 0))
+
+        collided_coins = pygame.sprite.spritecollide(player.sprite, coins, False)
+        for coin in collided_coins:
+            coins.remove(coin) 
+            coin_taken += 1 
+
+        for coin in coins:
+            if pygame.sprite.spritecollide(coin, obstacles, False):
+                coins.remove(coin)
 
         screen.blit(ground_surface, (0, 300))
         
         display_score(screen, score)
+
+        display_coin_taken(screen, coin_taken)
 
         player.update()
         player.draw(screen)
@@ -201,6 +248,9 @@ while True:
         obstacles.draw(screen)
 
         hearts.draw(screen)
+
+        coins.update() 
+        coins.draw(screen)
 
         if pygame.sprite.spritecollide(player.sprite, obstacles, False):
             count += 1
@@ -216,6 +266,7 @@ while True:
                 count = 0
                 obstacles.empty()  # Rimuovi tutti gli ostacoli
                 hearts.empty() #Rimuovi tutti i cuori
+                coins.empty() 
                 player.sprite.rect.midbottom = (100, 310)  # Ripristina la posizione del giocatore
             obstacles.empty()  # Rimuovi tutti gli ostacoli
             player.sprite.rect.midbottom = (100, 310)  # Ripristina la posizione del giocatore
@@ -227,15 +278,22 @@ while True:
         screen.blit(game_name, game_name_rect)
         score_message = message_font.render(f'Your score is: {score}', False, 'LightBlue')
         score_message_rect = score_message.get_rect(center=(400, 350))
+        coin_message_font = pygame.font.Font("C:/Users/matte/Downloads/Pixeltype.ttf", 40)  
+        coin_message = coin_message_font.render(f'Coin taken: {coin_taken}', False, 'LightBlue')
+        coin_message_rect = coin_message.get_rect(center=(200, 250))
+        
         if score == 0:
             screen.blit(game_message, game_message_rect)
         else:
             screen.blit(score_message, score_message_rect)
+        if score > 0:
+            screen.blit(coin_message, coin_message_rect)
 
     if message_displayed:
         display_message(screen)
 
     pygame.display.update()
     clock.tick(60)
+
 
 
